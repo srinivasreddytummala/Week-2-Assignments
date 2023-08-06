@@ -41,9 +41,68 @@
  */
 const express = require('express');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const readJSONFileMiddleware = require('./todoReadJsonMiddleware')
 
 const app = express();
+const port = 3000;
 
+app.use(readJSONFileMiddleware);
 app.use(bodyParser.json());
+
+
+function GetAllItems(req, res){
+  res.status(200).send(todoArray);
+}
+
+function GetItemFromId(req, res){
+  console.log(req.params);
+  let itemId = req.params.id;
+  if (!todoArray.length == 0) {
+    for (let i in todoArray){
+      if (todoArray[i]["id"] == itemId){
+        return res.status(200).send(todoArray[i]);
+      }
+    }
+  } else {
+    return res.status(404).send({"error":"Item not found"})
+  }
+
+}
+
+function createNewItem(req, res){
+  console.log(req.body);
+  let bodyObj = req.body;
+  counterId = req.counterId + 1;
+  bodyObj['id'] = counterId;
+  req.todoArray.push(bodyObj);
+  console.log(req.todoArray);
+  fs.writeFileSync(req.filePath,req.todoArray,'utf8');
+  res.status(201).send({"id": bodyObj['id']});
+}
+
+function updateItem(req, res){
+  let ItemId = req.params.id;
+  let bodyUpdatedObj = req.body;
+  for (let i = 0; i < todoArray.length; i++){
+    if (todoArray[i].id == ItemId){
+      let objLocation = i;
+    }
+  }
+
+  for (let j in Object.keys(bodyUpdatedObj)){
+    todoArray[objLocation][j] = bodyUpdatedObj[j];
+  }
+}
+
+app.get('/todos', GetAllItems)
+app.get('/todos/:id', GetItemFromId)
+app.post('/todos', createNewItem)
+app.put('/todos', updateItem)
+
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
 
 module.exports = app;
